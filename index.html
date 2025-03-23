@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman Game</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        #question {
+            margin-bottom: 20px;
+            font-size: 18px;
+            text-indent: 4ch;
+        }
+
+        #word-display {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        #letter-buttons {
+            display: grid;
+            grid-template-columns: repeat(9, auto);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        #letter-buttons button {
+            font-family: 'Times New Roman', serif;
+            font-size: 15px;
+            padding: 5px 10px;
+        }
+
+        #hangman-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #hangman {
+            width: 200px;
+            height: 300px;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+
+        #hangman div {
+            position: absolute;
+        }
+
+        /* 绞刑架部分 */
+        #gallows-top {
+            width: 100px;
+            height: 2px;
+            top: 20px;
+            left: 50px;
+            background-color: #000;
+        }
+
+        #gallows-vertical {
+            width: 2px;
+            height: 250px;
+            top: 20px;
+            left: 50px;
+            background-color: #000;
+        }
+
+        #gallows-base {
+            width: 150px;
+            height: 2px;
+            top: 270px;
+            left: 25px;
+            background-color: #000;
+        }
+
+        /* 绳子部分 */
+        #rope {
+            width: 2px;
+            height: 30px;
+            top: 20px;
+            left: 150px;
+            background-color: #000;
+            display: none;
+        }
+
+        /* 小人部分 */
+        #head {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            top: 50px;
+            left: 135px;
+            border: 2px solid #000;
+            background-color: transparent;
+            display: none;
+        }
+
+        #body,
+        #left-arm,
+        #right-arm,
+        #left-leg,
+        #right-leg {
+            width: 2px;
+            background-color: #000;
+            display: none;
+        }
+
+        #body {
+            height: 80px;
+            top: 80px;
+            left: 150px;
+        }
+
+        #left-arm {
+            height: 50px;
+            top: 90px;
+            left: 135px;
+            transform: rotate(30deg);
+        }
+
+        #right-arm {
+            height: 50px;
+            top: 90px;
+            left: 165px;
+            transform: rotate(-30deg);
+        }
+
+        #left-leg {
+            height: 70px;
+            top: 160px;
+            left: 135px;
+            transform: rotate(20deg);
+            top: 158px;
+        }
+
+        #right-leg {
+            height: 70px;
+            top: 160px;
+            left: 165px;
+            transform: rotate(-20deg);
+            top: 158px;
+        }
+
+        #game-result {
+            display: none;
+            font-size: 18px;
+            text-align: center;
+            margin-top: 10px;
+            line-height: 1;
+        }
+
+        #game-result .you-win {
+            color: blue;
+        }
+
+        #game-result .congratulations {
+            color: red;
+        }
+
+        #game-result .you-lose {
+            color: red;
+        }
+
+        #game-result .answer-label {
+            color: blue;
+        }
+
+        #game-result .answer-word {
+            color: red;
+        }
+
+       .blue-text {
+            color: blue;
+        }
+
+       .red-text {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Hangman Game <span>( <span class="blue-text">Time Left: </span><span class="red-text"><span id="timer">30</span>s</span> )</span></h1>
+    <div id="question">The largest lake in the British Isles is  ______.</div>
+    <div id="word-display"></div>
+    <div id="letter-buttons"></div>
+    <div id="hangman-container">
+        <div id="hangman">
+            <div id="gallows-top"></div>
+            <div id="gallows-vertical"></div>
+            <div id="gallows-base"></div>
+            <div id="rope"></div>
+            <div id="head"></div>
+            <div id="body"></div>
+            <div id="left-arm"></div>
+            <div id="right-arm"></div>
+            <div id="left-leg"></div>
+            <div id="right-leg"></div>
+        </div>
+        <div id="game-result">
+            <span class="you-win">You win!</span><br>
+            <span class="congratulations">Congratulations!</span>
+            <span class="you-lose">You lose!</span><br>
+            <span class="answer-label">Answer:</span>
+            <span class="answer-word"></span>
+        </div>
+    </div>
+
+    <script>
+        const wordToGuess = "Lough Neagh";
+        let guessedLetters = [];
+        let wrongGuesses = 0;
+        const maxWrongGuesses = 7;
+        let isGameOver = false;
+        let timeLeft = 30;
+        const timerElement = document.getElementById('timer');
+
+        function displayWord() {
+            let display = "";
+            for (let letter of wordToGuess) {
+                if (letter === " ") {
+                    display += " ";
+                } else if (guessedLetters.includes(letter.toLowerCase())) {
+                    display += letter;
+                } else {
+                    display += "_ ";
+                }
+            }
+            document.getElementById("word-display").textContent = display;
+        }
+
+        function createLetterButtons() {
+            const letterButtonsDiv = document.getElementById("letter-buttons");
+            const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+            const colors = ['#FF5733', '#33FF57', '#FFFF00'];
+            for (let i = 0; i < alphabet.length; i++) {
+                const letter = alphabet[i];
+                const button = document.createElement('button');
+                button.textContent = letter.toUpperCase();
+                button.style.backgroundColor = colors[i % 3];
+                button.addEventListener('click', () => makeGuess(letter));
+                letterButtonsDiv.appendChild(button);
+            }
+        }
+
+        function makeGuess(guess) {
+            if (isGameOver) return;
+
+            if (!wordToGuess.toLowerCase().includes(guess)) {
+                wrongGuesses++;
+                drawHangman();
+                if (wrongGuesses === maxWrongGuesses) {
+                    showResult(false);
+                }
+            }
+
+            if (!guessedLetters.includes(guess)) {
+                guessedLetters.push(guess);
+                displayWord();
+                if (!document.getElementById('word-display').textContent.includes('_')) {
+                    showResult(true);
+                }
+            }
+        }
+
+        function drawHangman() {
+            const bodyParts = ["rope", "head", "body", "left-arm", "right-arm", "left-leg", "right-leg"];
+            if (wrongGuesses <= bodyParts.length) {
+                document.getElementById(bodyParts[wrongGuesses - 1]).style.display = 'block';
+            }
+        }
+
+        function showResult(isWin) {
+            isGameOver = true;
+            const resultDiv = document.getElementById('game-result');
+            resultDiv.style.display = 'block';
+            const letterButtons = document.querySelectorAll('#letter-buttons button');
+            letterButtons.forEach(button => button.disabled = true);
+
+            if (isWin) {
+                document.querySelector('.you-win').style.display = 'block';
+                document.querySelector('.congratulations').style.display = 'block';
+                document.querySelector('.you-lose').style.display = 'none';
+                document.querySelector('.answer-label').style.display = 'none';
+                document.querySelector('.answer-word').style.display = 'none';
+            } else {
+                document.querySelector('.you-win').style.display = 'none';
+                document.querySelector('.congratulations').style.display = 'none';
+                document.querySelector('.you-lose').style.display = 'block';
+                document.querySelector('.answer-label').style.display = 'inline';
+                document.querySelector('.answer-word').textContent = wordToGuess;
+            }
+        }
+
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if (!isGameOver) {
+                        showResult(false);
+                    }
+                }
+            }, 1000);
+        }
+
+        displayWord();
+        createLetterButtons();
+        startTimer();
+    </script>
+</body>
+
+</html>    
