@@ -15,6 +15,7 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            line-height: 1;
         }
 
         h1 {
@@ -64,7 +65,7 @@
             position: absolute;
         }
 
-        /* 绞刑架部分 */
+        /* 绞刑架 */
         #gallows-top {
             width: 100px;
             height: 2px;
@@ -89,7 +90,7 @@
             background-color: #000;
         }
 
-        /* 绳子部分 */
+        /* 绳子 */
         #rope {
             width: 2px;
             height: 30px;
@@ -99,7 +100,7 @@
             display: none;
         }
 
-        /* 小人部分 */
+        /* 小人 */
         #head {
             width: 30px;
             height: 30px;
@@ -146,7 +147,6 @@
             top: 160px;
             left: 135px;
             transform: rotate(20deg);
-            top: 158px;
         }
 
         #right-leg {
@@ -154,7 +154,6 @@
             top: 160px;
             left: 165px;
             transform: rotate(-20deg);
-            top: 158px;
         }
 
         #game-result {
@@ -162,7 +161,6 @@
             font-size: 18px;
             text-align: center;
             margin-top: 10px;
-            line-height: 1;
         }
 
         #game-result .you-win {
@@ -197,7 +195,7 @@
 
 <body>
     <h1>Hangman Game <span>( <span class="blue-text">Time Left: </span><span class="red-text"><span id="timer">30</span>s</span> )</span></h1>
-    <div id="question">The largest lake in the British Isles is  ______.</div>
+    <div id="question">The largest lake in the British Isles is <span id="hidden-word">______</span>.</div>
     <div id="word-display"></div>
     <div id="letter-buttons"></div>
     <div id="hangman-container">
@@ -230,6 +228,12 @@
         let isGameOver = false;
         let timeLeft = 30;
         const timerElement = document.getElementById('timer');
+
+        const correctSound = new Audio('https://cdn2.ear0.com:3321/source/index?&soundid=41126&filename=%E4%BD%A0%E5%A4%AA%E6%A3%92%E4%BA%86_%E8%80%B3%E8%81%86%E7%BD%91_[%E5%A3%B0%E9%9F%B3ID%EF%BC%9A41126]&filetype=mp3&timestamp=1742815625&channel=main&token=600b78ce18a7a773c62941cd05c56dfd');
+        const wrongSound = new Audio('https://cdn2.ear0.com:3321/source/index?&soundid=36278&filename=%E9%94%99%E8%AF%AF%E9%9F%B3%E6%95%88_%E8%80%B3%E8%81%86%E7%BD%91_[%E5%A3%B0%E9%9F%B3ID%EF%BC%9A36278]&filetype=mp3&timestamp=1742816215&channel=main&token=47490acbfa5081e2d26020db0e1cbb39');
+        const winSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2065/2065.wav');
+        const loseSound = new Audio('https://cdn2.ear0.com:3321/source/index?&soundid=18675&filename=%E6%B8%B8%E6%88%8F%E7%BB%93%E6%9D%9F/%E5%A4%B1%E8%B4%A5_%E8%80%B3%E8%81%86%E7%BD%91_[%E5%A3%B0%E9%9F%B3ID%EF%BC%9A18675]&filetype=wav&timestamp=1742814117&channel=main&token=1279560046fde95dea6af8c55a653bbe');
+        const countdownSound = new Audio('https://assets.mixkit.co/active_storage/sfx/921/921.wav');
 
         function displayWord() {
             let display = "";
@@ -265,9 +269,12 @@
             if (!wordToGuess.toLowerCase().includes(guess)) {
                 wrongGuesses++;
                 drawHangman();
+                wrongSound.play();
                 if (wrongGuesses === maxWrongGuesses) {
                     showResult(false);
                 }
+            } else {
+                correctSound.play();
             }
 
             if (!guessedLetters.includes(guess)) {
@@ -299,12 +306,14 @@
                 document.querySelector('.you-lose').style.display = 'none';
                 document.querySelector('.answer-label').style.display = 'none';
                 document.querySelector('.answer-word').style.display = 'none';
+                winSound.play();
             } else {
                 document.querySelector('.you-win').style.display = 'none';
                 document.querySelector('.congratulations').style.display = 'none';
                 document.querySelector('.you-lose').style.display = 'block';
                 document.querySelector('.answer-label').style.display = 'inline';
                 document.querySelector('.answer-word').textContent = wordToGuess;
+                loseSound.play();
             }
         }
 
@@ -312,6 +321,9 @@
             const timerInterval = setInterval(() => {
                 timeLeft--;
                 timerElement.textContent = timeLeft;
+                if (timeLeft === 15) {
+                    countdownSound.play();
+                }
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
                     if (!isGameOver) {
